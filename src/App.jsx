@@ -1,66 +1,97 @@
 import React, { useState, useMemo } from 'react';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend
+} from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 
-// Registra os componentes do gráfico
+// Registro dos elementos necessários para o Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const App = () => {
-  // --- ESTADOS (Inputs) ---
-  const [liderName, setLiderName] = useState('');
-  const [rede, setRede] = useState('');
-  const [episodio, setEpisodio] = useState('');
-  
-  const [inicios, setInicios] = useState(0);
-  const [inativas, setInativas] = useState(0);
-  const [cadastros, setCadastros] = useState(0);
-  const [ativas, setAtivas] = useState(0);
-  const [iniciosCompletos, setIniciosCompletos] = useState(0);
+const ExtratoPerformance = () => {
+  // Estado centralizado para os inputs
+  const [dados, setDados] = useState({
+    liderName: '',
+    rede: '',
+    episodio: '',
+    inicios: 0,
+    inativas: 0,
+    cadastros: 0,
+    ativas: 0,
+    iniciosCompletosCount: 0,
+    valTabela1: 0,
+    valTabela2: 0,
+    valTarget: 0,
+    valEstrela: 0,
+  });
 
-  const [valTabela1, setValTabela1] = useState(0);
-  const [valTabela2, setValTabela2] = useState(0);
-  const [valTarget, setValTarget] = useState(0);
-  const [valEstrela, setValEstrela] = useState(0);
-
-  // --- CÁLCULOS AUTOMÁTICOS ---
-  const percentualAtividade = useMemo(() => {
-    return cadastros > 0 ? ((ativas / cadastros) * 100).toFixed(1) : '0.0';
-  }, [ativas, cadastros]);
-
-  const saldo = inicios - inativas;
-  const valIniciosCompletos = iniciosCompletos * 50; // R$ 50 por início completo
-  const totalReceber = valTabela1 + valTabela2 + valIniciosCompletos + valTarget + valEstrela;
-
-  // Formatador de Moeda
-  const formatCurrency = (val) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+  // Handlers para atualização de estado
+  const handleChange = (e) => {
+    const { id, value, type } = e.target;
+    setDados(prev => ({
+      ...prev,
+      [id]: type === 'number' ? parseFloat(value) || 0 : value
+    }));
   };
 
-  // Lógica do Gráfico
+  // Cálculos derivados (Memoized para eficiência)
+  const metricas = useMemo(() => {
+    const percCalc = dados.cadastros > 0 ? (dados.ativas / dados.cadastros) * 100 : 0;
+    const saldo = dados.inicios - dados.inativas;
+    const iniCompVal = dados.iniciosCompletosCount * 50;
+    const total = dados.valTabela1 + dados.valTabela2 + iniCompVal + dados.valTarget + dados.valEstrela;
+
+    return { percCalc, saldo, iniCompVal, total };
+  }, [dados]);
+
+  const currencyFormatter = new Intl.NumberFormat('pt-BR', { 
+    style: 'currency', 
+    currency: 'BRL' 
+  });
+
+  // Configuração do Gráfico
   const chartData = {
     labels: ['Tab 1', 'Tab 2', 'Inícios', 'Bônus'],
-    datasets: [
-      {
-        data: [valTabela1, valTabela2, valIniciosCompletos, valTarget + valEstrela],
-        backgroundColor: ['#1e3a8a', '#d97706', '#10b981', '#8b5cf6'],
-        borderWidth: 0,
-      },
-    ],
+    datasets: [{
+      data: [
+        dados.valTabela1, 
+        dados.valTabela2, 
+        metricas.iniCompVal, 
+        dados.valTarget + dados.valEstrela
+      ],
+      backgroundColor: ['#1e3a8a', '#d97706', '#10b981', '#8b5cf6'],
+      borderWidth: 0,
+      hoverOffset: 10
+    }]
   };
 
   const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'bottom' }
+      legend: { 
+        position: 'bottom', 
+        labels: { boxWidth: 8, font: { size: 9, weight: 'bold' }, padding: 15 } 
+      }
     },
-    cutout: '75%',
-    maintainAspectRatio: false
+    cutout: '75%'
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-10">
-      
+    <div className="text-slate-800 bg-slate-50 min-h-screen font-['Montserrat']">
+      {/* Estilos customizados injetados via Tailwind e CSS inline para fidelidade */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
+        .gold-gradient { background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); }
+        .navy-gradient { background: linear-gradient(135deg, #1e3a8a 0%, #172554 100%); }
+        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        @media print { .no-print { display: none !important; } }
+      `}</style>
+
       {/* Navbar */}
-      <nav className="bg-gradient-to-br from-blue-900 to-blue-950 text-white shadow-lg sticky top-0 z-50 print:hidden">
+      <nav className="navy-gradient text-white shadow-lg sticky top-0 z-50 no-print">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <span className="text-2xl">💰</span>
@@ -69,177 +100,144 @@ const App = () => {
               <p className="text-xs text-blue-200">Gestão de Performance</p>
             </div>
           </div>
-          <button 
-            onClick={() => window.print()} 
-            className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all flex items-center"
-          >
-            📄 GERAR PDF
+          <button onClick={() => window.print()} className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all flex items-center">
+            <span className="mr-2">📄</span> GERAR PDF / ENVIAR
           </button>
         </div>
       </nav>
 
       <div className="container mx-auto px-4 py-8">
-        
-        {/* Título (Escondido na impressão) */}
-        <div className="mb-8 text-center max-w-3xl mx-auto print:hidden">
+        <div className="mb-8 text-center max-w-3xl mx-auto no-print">
           <h2 className="text-2xl font-bold text-blue-900 mb-2">Painel de Geração de Extrato</h2>
           <p className="text-slate-600">Preencha os dados abaixo para gerar o extrato automático.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-          {/* COLUNA ESQUERDA: INPUTS (Não aparece na impressão) */}
-          <div className="lg:col-span-4 space-y-6 print:hidden">
-            
-            {/* Bloco 1: Cadastro */}
-            <div className="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-900">
+          {/* COLUNA ESQUERDA: INPUTS */}
+          <div className="lg:col-span-4 space-y-6 no-print">
+            <div className="bg-white p-6 rounded-xl card-shadow border-t-4 border-blue-900">
               <h3 className="text-lg font-bold mb-4 flex items-center">👤 Cadastro</h3>
               <div className="space-y-3">
-                <InputGroup label="Nome do(a) Líder" value={liderName} onChange={setLiderName} type="text" placeholder="Nome Completo" />
-                <InputGroup label="Rede" value={rede} onChange={setRede} type="text" placeholder="Identificação da Rede" />
-                <InputGroup label="Episódio Atual" value={episodio} onChange={setEpisodio} type="text" placeholder="Ex: 01/2024" />
+                <InputGroup label="Nome do(a) Líder" id="liderName" value={dados.liderName} onChange={handleChange} />
+                <InputGroup label="Rede" id="rede" value={dados.rede} onChange={handleChange} />
+                <InputGroup label="Episódio Atual" id="episodio" value={dados.episodio} onChange={handleChange} />
               </div>
             </div>
 
-            {/* Bloco 2: Performance */}
-            <div className="bg-white p-6 rounded-xl shadow-md border-t-4 border-amber-500">
+            <div className="bg-white p-6 rounded-xl card-shadow border-t-4 border-amber-500">
               <h3 className="text-lg font-bold mb-4 flex items-center">📊 Performance</h3>
               <div className="grid grid-cols-2 gap-3">
-                <InputGroup label="Inícios" value={inicios} onChange={setInicios} type="number" />
-                <InputGroup label="Inativas i6" value={inativas} onChange={setInativas} type="number" />
-                <InputGroup label="Cadastro Total" value={cadastros} onChange={setCadastros} type="number" />
-                <InputGroup label="Ativas Real" value={ativas} onChange={setAtivas} type="number" />
+                <InputGroup label="Inícios" id="inicios" type="number" value={dados.inicios} onChange={handleChange} />
+                <InputGroup label="Inativas i6" id="inativas" type="number" value={dados.inativas} onChange={handleChange} />
+                <InputGroup label="Total Cadastro" id="cadastros" type="number" value={dados.cadastros} onChange={handleChange} />
+                <InputGroup label="Ativas Real" id="ativas" type="number" value={dados.ativas} onChange={handleChange} />
                 <div className="col-span-2">
-                  <InputGroup label="Inícios Completos (Qtd)" value={iniciosCompletos} onChange={setIniciosCompletos} type="number" />
+                  <InputGroup label="Inícios Completos (Qtd)" id="iniciosCompletosCount" type="number" value={dados.iniciosCompletosCount} onChange={handleChange} />
                 </div>
               </div>
             </div>
 
-            {/* Bloco 3: Ganhos */}
-            <div className="bg-white p-6 rounded-xl shadow-md border-t-4 border-green-600">
-              <h3 className="text-lg font-bold mb-4 flex items-center">💸 Valores (R$)</h3>
+            <div className="bg-white p-6 rounded-xl card-shadow border-t-4 border-green-600">
+              <h3 className="text-lg font-bold mb-4 flex items-center">💸 Ganhos</h3>
               <div className="space-y-3">
-                <InputGroup label="Tabela 1 (Ativas - Inícios)" value={valTabela1} onChange={setValTabela1} type="number" step="0.01" />
-                <InputGroup label="Tabela 2 (% Receita)" value={valTabela2} onChange={setValTabela2} type="number" step="0.01" />
-                <InputGroup label="Bônus Target Ativos" value={valTarget} onChange={setValTarget} type="number" step="0.01" />
-                <InputGroup label="Bônus Target Estrela" value={valEstrela} onChange={setValEstrela} type="number" step="0.01" />
+                <InputGroup label="Tabela 1" id="valTabela1" type="number" value={dados.valTabela1} onChange={handleChange} />
+                <InputGroup label="Tabela 2" id="valTabela2" type="number" value={dados.valTabela2} onChange={handleChange} />
+                <InputGroup label="Bônus Target" id="valTarget" type="number" value={dados.valTarget} onChange={handleChange} />
+                <InputGroup label="Bônus Estrela" id="valEstrela" type="number" value={dados.valEstrela} onChange={handleChange} />
               </div>
             </div>
-
           </div>
 
-          {/* COLUNA DIREITA: DASHBOARD (O que será impresso) */}
-          <div className="lg:col-span-8 print:col-span-12">
-            <div className="bg-white rounded-xl shadow-md overflow-hidden border border-slate-200 print:shadow-none print:border-none">
-                
-              {/* Cabeçalho do Extrato */}
-              <div className="bg-slate-900 p-6 text-white flex flex-col md:flex-row justify-between items-center border-b-4 border-amber-500 print:bg-slate-900 print:text-white">
+          {/* COLUNA DIREITA: DASHBOARD */}
+          <div className="lg:col-span-8">
+            <div className="bg-white rounded-xl card-shadow overflow-hidden" id="printableArea">
+              <div className="bg-slate-900 p-6 text-white flex flex-col md:flex-row justify-between items-center border-b-4 border-amber-500">
                 <div>
-                  <h2 className="text-2xl font-bold uppercase tracking-tight">{liderName || 'Nome do(a) Líder'}</h2>
-                  <p className="text-amber-400 font-semibold">Rede: {rede || '---'}</p>
+                  <h2 className="text-2xl font-bold uppercase tracking-tight">{dados.liderName || 'Nome do(a) Líder'}</h2>
+                  <p className="text-amber-400 font-semibold">Rede: {dados.rede || '---'}</p>
                 </div>
                 <div className="mt-4 md:mt-0 text-right">
                   <div className="text-sm opacity-80 font-bold uppercase">Extrato de Ganhos</div>
-                  <div className="text-xl font-extrabold text-amber-500">Episódio {episodio || '---'}</div>
+                  <div className="text-xl font-extrabold text-amber-500">Episódio {dados.episodio || '---'}</div>
                 </div>
               </div>
 
               <div className="p-6 md:p-8 space-y-8">
-
-                {/* Cards de Métricas */}
+                {/* Métricas Principais */}
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                  <MetricCard label="Inícios" value={inicios} color="blue" icon="🚀" />
-                  <MetricCard label="Inativas i6" value={inativas} color="red" icon="⚠️" />
-                  <MetricCard label="Cadastro" value={cadastros} color="slate" icon="📋" />
-                  <MetricCard label="Ativas" value={ativas} color="emerald" icon="✅" />
-                  
-                  {/* Card Saldo com Cor Dinâmica */}
-                  <div className={`p-3 rounded-lg text-center border ${saldo >= 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
-                    <div className="text-[10px] font-bold uppercase mb-1 flex items-center justify-center">
-                      <span className="mr-1">⚖️</span> Saldo
-                    </div>
-                    <div className="text-lg font-extrabold">{saldo}</div>
+                  <MetricCard label="Inícios" val={dados.inicios} color="blue" icon="🚀" />
+                  <MetricCard label="Inativas i6" val={dados.inativas} color="red" icon="⚠️" />
+                  <MetricCard label="Cadastro" val={dados.cadastros} color="slate" icon="📋" />
+                  <MetricCard label="Ativas" val={dados.ativas} color="emerald" icon="✅" />
+                  <div className={`p-3 rounded-lg text-center border transition-colors ${
+                    metricas.saldo > 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 
+                    metricas.saldo < 0 ? 'bg-red-50 border-red-200 text-red-800' : 'bg-amber-50 border-amber-200 text-amber-700'
+                  }`}>
+                    <div className="text-[10px] font-bold uppercase mb-1 flex items-center justify-center">⚖️ Saldo</div>
+                    <div className="text-lg font-extrabold">{metricas.saldo}</div>
                   </div>
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-8">
-                  
-                  {/* Lista de Detalhes */}
                   <div className="flex-1 space-y-4">
-                    <SectionTitle icon="📊" title="Indicadores de Performance" />
+                    <h3 className="font-bold text-blue-900 border-b-2 border-blue-50 pb-2">📊 Performance</h3>
+                    <div className="flex justify-between items-center text-sm py-2 px-3 bg-slate-50 rounded">
+                      <span className="text-slate-600 font-semibold">% de Atividade:</span>
+                      <span className="font-bold text-blue-700 text-lg">{metricas.percCalc.toFixed(1)}%</span>
+                    </div>
                     
-                    <RowItem label="% de Atividade:" value={`${percentualAtividade}%`} valueClass="text-blue-700 text-lg" />
-                    <RowItem label="Inícios Completos:" value={iniciosCompletos} />
-
-                    <div className="pt-4">
-                      <SectionTitle icon="💰" title="Ganhos do Episódio" />
-                    </div>
-
-                    <RowItem label="Tabela 1 (Liderança)" value={formatCurrency(valTabela1)} />
-                    <RowItem label="Tabela 2 (% Receita)" value={formatCurrency(valTabela2)} />
-                    <div className="flex justify-between items-center text-sm bg-green-50 p-2 rounded px-3 border border-green-100 print:bg-green-50">
+                    <h3 className="font-bold text-blue-900 border-b-2 border-blue-50 pb-2 pt-4">💰 Ganhos</h3>
+                    <GainRow label="Tabela 1 (Liderança)" val={currencyFormatter.format(dados.valTabela1)} />
+                    <GainRow label="Tabela 2 (% Receita)" val={currencyFormatter.format(dados.valTabela2)} />
+                    <div className="flex justify-between items-center text-sm bg-green-50 p-2 rounded px-3 border border-green-100">
                       <span className="text-green-800 font-semibold">Inícios Completos (Bônus)</span>
-                      <span className="font-bold text-green-800">{formatCurrency(valIniciosCompletos)}</span>
+                      <span className="font-bold text-green-800">{currencyFormatter.format(metricas.iniCompVal)}</span>
                     </div>
-                    <RowItem label="Bônus Target Ativos" value={formatCurrency(valTarget)} />
-                    <RowItem label="Bônus Target Estrela" value={formatCurrency(valEstrela)} />
+                    <GainRow label="Bônus Target Ativos" val={currencyFormatter.format(dados.valTarget)} />
+                    <GainRow label="Bônus Target Estrela" val={currencyFormatter.format(dados.valEstrela)} />
                   </div>
 
-                  {/* Coluna Visual e Gráfico */}
-                  <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 rounded-xl p-4 border border-slate-100 print:bg-slate-50">
+                  <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 rounded-xl p-4 border border-slate-100">
                     <h4 className="text-xs font-bold text-slate-500 mb-4 uppercase">Visão de Ganhos</h4>
-                    <div className="w-full max-w-[250px] h-[250px]">
-                      {/* Gráfico Doughnut */}
+                    <div className="w-full h-[250px]">
                       <Doughnut data={chartData} options={chartOptions} />
                     </div>
-                    
-                    {/* Badges de Conquista */}
-                    <div className="mt-6 w-full space-y-2">
-                        {inicios >= 10 ? (
-                            <>
-                                <div className="bg-purple-600 text-white p-3 rounded-xl text-[11px] font-extrabold text-center shadow-md print:bg-purple-600 print:text-white">
-                                    👑 KIT LÍDER MASTER (10+ Inícios)
-                                </div>
-                                <div className="bg-amber-100 text-amber-800 p-1 rounded-full text-[10px] font-bold text-center print:bg-amber-100">Conquistado!</div>
-                            </>
-                        ) : inicios >= 5 ? (
-                            <>
-                                <div className="bg-amber-500 text-white p-3 rounded-xl text-[11px] font-extrabold text-center shadow-md print:bg-amber-500 print:text-white">
-                                    🎁 KIT PRÊMIO LÍDER (5-9 Inícios)
-                                </div>
-                                <div className="bg-amber-100 text-amber-800 p-1 rounded-full text-[10px] font-bold text-center print:bg-amber-100">Conquistado!</div>
-                            </>
-                        ) : (
-                            <div className="bg-slate-200 text-slate-400 p-3 rounded-xl text-[10px] font-bold text-center italic border border-slate-300">
-                                Nenhum Kit Conquistado
-                            </div>
-                        )}
+                    <div className="mt-4 w-full">
+                      {dados.inicios >= 10 ? (
+                        <div className="bg-purple-600 text-white p-3 rounded-xl text-[11px] font-extrabold text-center shadow-md animate-bounce">
+                          👑 KIT LÍDER MASTER (10+ Inícios)
+                        </div>
+                      ) : dados.inicios >= 5 ? (
+                        <div className="bg-amber-500 text-white p-3 rounded-xl text-[11px] font-extrabold text-center shadow-md">
+                          🎁 KIT PRÊMIO LÍDER (5-9 Inícios)
+                        </div>
+                      ) : (
+                        <div className="bg-slate-200 text-slate-400 p-3 rounded-xl text-[10px] font-bold text-center italic border border-slate-300">
+                          Nenhum Kit Conquistado (Abaixo de 5)
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* Banner Total */}
-                <div className="bg-gradient-to-r from-amber-400 to-amber-600 p-6 rounded-xl shadow-lg text-white flex flex-col md:flex-row justify-between items-center print:bg-amber-500 print:text-white">
+                <div className="gold-gradient p-6 rounded-xl shadow-lg text-white flex flex-col md:flex-row justify-between items-center">
                   <div className="flex items-center mb-2 md:mb-0">
                     <span className="text-3xl mr-3">💎</span>
                     <div>
                       <p className="text-amber-100 text-sm font-semibold uppercase tracking-wider">Valor Total a Receber</p>
+                      <p className="text-xs text-amber-100 opacity-80">Parabéns pelo seu trabalho!</p>
                     </div>
                   </div>
-                  <div className="text-4xl font-extrabold">{formatCurrency(totalReceber)}</div>
+                  <div className="text-4xl font-extrabold">{currencyFormatter.format(metricas.total)}</div>
                 </div>
 
-                {/* Área para Prints */}
-                <div className="space-y-4 pt-4 break-inside-avoid">
-                  <h3 className="font-bold text-slate-700 text-sm uppercase flex items-center">
-                    <span className="mr-2">📸</span> Área para Prints das Tabelas
-                  </h3>
-                  <div className="border-4 border-dashed border-slate-200 p-20 rounded-2xl text-center bg-slate-50 flex flex-col items-center justify-center min-h-[300px]">
-                    <p className="text-slate-400 font-bold text-lg mb-2 uppercase">Espaço Reservado: Tabela 1 e Tabela 2</p>
-                    <p className="text-slate-400 text-sm">Cole aqui o print das tabelas.</p>
+                {/* Print Area Placeholder */}
+                <div className="space-y-4 pt-4">
+                  <h3 className="font-bold text-slate-700 text-sm uppercase">📸 Área para Prints</h3>
+                  <div className="border-4 border-dashed border-slate-200 p-20 rounded-2xl text-center bg-slate-25 flex flex-col items-center justify-center min-h-[300px]">
+                    <p className="text-slate-400 font-bold uppercase">Espaço Reservado para Tabelas</p>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
@@ -249,51 +247,32 @@ const App = () => {
   );
 };
 
-// --- Subcomponentes para Limpar o Código ---
-
-const InputGroup = ({ label, value, onChange, type = "text", placeholder, step }) => (
+// Sub-componentes auxiliares para organização
+const InputGroup = ({ label, id, ...props }) => (
   <div className="flex flex-col">
-    <label className="text-xs font-bold text-slate-600 mb-1">{label}</label>
-    <input 
-      type={type} 
-      step={step}
-      className="w-full p-2 border border-slate-300 rounded-md focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
-      placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange(type === 'number' ? Number(e.target.value) : e.target.value)}
+    <label htmlFor={id} className="text-xs font-semibold text-slate-600 mb-1">{label}</label>
+    <input
+      id={id}
+      className="w-full p-2 border border-slate-300 rounded-md focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
+      {...props}
     />
   </div>
 );
 
-const MetricCard = ({ label, value, color, icon }) => {
-  const colors = {
-    blue: "bg-blue-50 border-blue-100 text-blue-900",
-    red: "bg-red-50 border-red-100 text-red-700",
-    slate: "bg-slate-50 border-slate-200 text-slate-700",
-    emerald: "bg-emerald-50 border-emerald-100 text-emerald-800"
-  };
-  
-  return (
-    <div className={`p-3 rounded-lg text-center border ${colors[color]}`}>
-      <div className="text-[10px] opacity-70 font-bold uppercase mb-1 flex items-center justify-center">
-        <span className="mr-1">{icon}</span> {label}
-      </div>
-      <div className="text-lg font-extrabold">{value}</div>
+const MetricCard = ({ label, val, color, icon }) => (
+  <div className={`bg-${color}-50 p-3 rounded-lg text-center border border-${color}-100`}>
+    <div className={`text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center justify-center`}>
+      <span className="mr-1">{icon}</span> {label}
     </div>
-  );
-};
-
-const SectionTitle = ({ icon, title }) => (
-  <h3 className="font-bold text-blue-900 border-b-2 border-blue-50 pb-2 flex items-center">
-    <span className="mr-2">{icon}</span> {title}
-  </h3>
-);
-
-const RowItem = ({ label, value, valueClass = "font-bold text-slate-800" }) => (
-  <div className="flex justify-between items-center text-sm px-3 py-1">
-    <span className="text-slate-600">{label}</span>
-    <span className={valueClass}>{value}</span>
+    <div className={`text-lg font-extrabold text-${color}-900`}>{val}</div>
   </div>
 );
 
-export default App;
+const GainRow = ({ label, val }) => (
+  <div className="flex justify-between items-center text-sm px-3">
+    <span className="text-slate-600">{label}</span>
+    <span className="font-bold text-slate-800">{val}</span>
+  </div>
+);
+
+export default ExtratoPerformance;
