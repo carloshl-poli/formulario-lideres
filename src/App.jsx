@@ -10,7 +10,7 @@ import { Doughnut } from 'react-chartjs-2';
 // Registro dos elementos necessários para o Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// --- TABELAS TÉCNICAS (COMPONENTES) ---
+// --- TABELAS TÉCNICAS RECONSTRUÍDAS ---
 
 const Tabela1 = () => {
   const colunasInicios = [4, 5, 7, 9, 11, 15, 21];
@@ -27,14 +27,14 @@ const Tabela1 = () => {
   ];
 
   return (
-    <div className="overflow-x-auto border border-teal-500 rounded-sm mb-6 bg-white">
-      <div className="bg-[#26b4c3] text-white text-center py-1 font-bold uppercase text-[10px] tracking-widest">
+    <div className="pdf-no-break overflow-x-auto border border-teal-500 rounded-sm mb-6 bg-white">
+      <div className="bg-[#26b4c3] text-white text-center py-1 font-bold uppercase text-sm tracking-widest">
         Líder Padrão - Tabela 1
       </div>
-      <table className="w-full text-[9px] text-center border-collapse">
+      <table className="w-full text-[10px] text-center border-collapse">
         <thead>
           <tr className="bg-white border-b border-teal-500">
-            <th className="border-r border-teal-500 p-1 w-24" rowSpan="2">Valor da Tabela</th>
+            <th className="border-r border-teal-500 p-1 w-32" rowSpan="2">Valor em R$ da tabela</th>
             <th className="bg-[#26b4c3] text-white p-1" colSpan="7">Inícios</th>
           </tr>
           <tr className="bg-white border-b border-teal-500 font-bold">
@@ -43,12 +43,12 @@ const Tabela1 = () => {
         </thead>
         <tbody>
           {linhas.map((row, i) => (
-            <tr key={i} className="border-b border-slate-100 hover:bg-slate-50">
-              <td className="border-r border-teal-500 p-1 font-bold flex justify-between px-2">
+            <tr key={i} className="border-b border-slate-200 hover:bg-slate-50">
+              <td className="border-r border-teal-500 p-1 font-bold flex justify-between px-4">
                 <span>{row.range[0]}</span> <span>{row.range[1]}</span>
               </td>
               {row.values.map((val, idx) => (
-                <td key={idx} className="border-r border-slate-100 p-1">R$ {val}</td>
+                <td key={idx} className="border-r border-slate-200 p-1">R$ {val}</td>
               ))}
             </tr>
           ))}
@@ -70,12 +70,12 @@ const Tabela2 = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="border border-teal-500 rounded-sm overflow-hidden bg-white shadow-sm">
-        <div className="bg-[#f8fafc] p-2 font-bold text-[10px] border-b border-teal-500 uppercase">Tabela 2: % x Receita do Grupo</div>
-        <table className="w-full text-[10px]">
+      <div className="pdf-no-break border border-teal-500 rounded-sm overflow-hidden bg-white">
+        <div className="bg-[#f8fafc] p-2 font-bold text-[11px] border-b border-teal-500 uppercase text-center">Tabela 2: % x Receita do Grupo</div>
+        <table className="w-full text-[11px]">
           <tbody>
             {niveis.map(n => (
-              <tr key={n.nome} className="border-b border-slate-50">
+              <tr key={n.nome} className="border-b border-slate-100">
                 <td style={{ backgroundColor: n.cor }} className="text-white font-bold p-2 w-1/2">{n.nome}</td>
                 <td className="p-2 text-right font-semibold bg-slate-50">{n.perc}</td>
               </tr>
@@ -83,16 +83,16 @@ const Tabela2 = () => {
           </tbody>
         </table>
       </div>
-      <div className="border border-slate-800 rounded-sm overflow-hidden bg-white shadow-sm">
-        <div className="bg-[#f8fafc] p-2 font-bold text-[10px] border-b border-slate-800 uppercase">Bônus Migração</div>
-        <table className="w-full text-[10px]">
+      <div className="pdf-no-break border border-slate-800 rounded-sm overflow-hidden bg-white">
+        <div className="bg-[#f8fafc] p-2 font-bold text-[11px] border-b border-slate-800 uppercase text-center">Bônus Migração</div>
+        <table className="w-full text-[11px]">
           <tbody>
             {niveis.slice(0, 5).map((n, i) => (
-              <tr key={i} className="border-b border-slate-50">
-                <td className="p-2 w-6 font-bold text-slate-400">{i + 1}</td>
-                <td style={{ backgroundColor: n.cor }} className="text-white font-bold p-2 text-[9px]">{n.nome}</td>
+              <tr key={i} className="border-b border-slate-100">
+                <td className="p-2 w-8 font-bold text-slate-400">{i + 1}</td>
+                <td style={{ backgroundColor: n.cor }} className="text-white font-bold p-2 text-xs">{n.nome}</td>
                 <td className="p-2 text-center text-slate-400">➔</td>
-                <td className="bg-slate-50 p-2 font-bold uppercase">{n.migra}</td>
+                <td className="bg-slate-100 p-2 font-bold uppercase">{n.migra}</td>
                 <td className="p-2 text-right font-black">{n.bonus}</td>
               </tr>
             ))}
@@ -177,7 +177,30 @@ const ExtratoPerformance = () => {
         .gold-gradient { background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); }
         .navy-gradient { background: linear-gradient(135deg, #1e3a8a 0%, #172554 100%); }
         .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        @media print { .no-print { display: none !important; } }
+        
+        @media print { 
+            .no-print { display: none !important; } 
+            
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            
+            /* Garante que o PDF ocupe a largura total */
+            .lg\\:col-span-8 { width: 100% !important; }
+            .container { max-width: 100% !important; width: 100% !important; margin: 0 !important; }
+            
+            /* Força os blocos a não quebrarem entre páginas */
+            .pdf-no-break {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+              display: block !important;
+            }
+
+            #printableArea { box-shadow: none !important; border: none !important; }
+            
+            @page {
+              margin: 1cm;
+              size: auto;
+            }
+        }
       `}</style>
 
       {/* Navbar */}
@@ -199,11 +222,10 @@ const ExtratoPerformance = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 text-center max-w-3xl mx-auto no-print">
           <h2 className="text-2xl font-bold text-blue-900 mb-2">Painel de Geração de Extrato</h2>
-          <p className="text-slate-600 italic">Preencha os dados abaixo para atualizar o extrato em tempo real.</p>
+          <p className="text-slate-600 italic">Preencha os dados abaixo para atualizar o extrato automático.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* COLUNA ESQUERDA: INPUTS */}
           <div className="lg:col-span-4 space-y-6 no-print">
             <div className="bg-white p-6 rounded-xl card-shadow border-t-4 border-blue-900">
               <h3 className="text-lg font-bold mb-4 flex items-center">👤 Cadastro</h3>
@@ -238,15 +260,15 @@ const ExtratoPerformance = () => {
             </div>
           </div>
 
-          {/* COLUNA DIREITA: DASHBOARD */}
           <div className="lg:col-span-8">
             <div className="bg-white rounded-xl card-shadow overflow-hidden" id="printableArea">
+              {/* HEADER DO CONTEÚDO - Ajuste de alinhamento para o PDF */}
               <div className="bg-slate-900 p-6 text-white flex flex-col md:flex-row justify-between items-center border-b-4 border-amber-500">
-                <div>
+                <div className="text-center md:text-left">
                   <h2 className="text-2xl font-bold uppercase tracking-tight">{dados.liderName || 'Nome do(a) Líder'}</h2>
                   <p className="text-amber-400 font-semibold uppercase text-xs tracking-wider">Rede: {dados.rede || '---'}</p>
                 </div>
-                <div className="mt-4 md:mt-0 text-right">
+                <div className="mt-4 md:mt-0 text-center md:text-right">
                   <div className="text-sm opacity-80 font-bold uppercase">Extrato de Ganhos</div>
                   <div className="text-xl font-extrabold text-amber-500 tracking-tighter">Episódio {dados.episodio || '---'}</div>
                 </div>
@@ -254,7 +276,7 @@ const ExtratoPerformance = () => {
 
               <div className="p-6 md:p-8 space-y-8">
                 {/* Métricas Principais */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div className="pdf-no-break grid grid-cols-2 md:grid-cols-5 gap-3">
                   <MetricCard label="Inícios" val={dados.inicios} color="blue" icon="🚀" />
                   <MetricCard label="Inativas i6" val={dados.inativas} color="red" icon="⚠️" />
                   <MetricCard label="Cadastro" val={dados.cadastros} color="slate" icon="📋" />
@@ -281,19 +303,20 @@ const ExtratoPerformance = () => {
                     <h3 className="font-bold text-blue-900 border-b-2 border-blue-50 pb-2 pt-4 flex items-center">
                       <span className="mr-2 text-sm">💰</span> Ganhos Calculados
                     </h3>
-                    <GainRow label="Tabela 1 (Liderança)" val={currencyFormatter.format(dados.valTabela1)} />
+                    <GainRow label="Tabela 1 (Ativas vs Início)" val={currencyFormatter.format(dados.valTabela1)} />
                     <GainRow label="Tabela 2 (% Receita)" val={currencyFormatter.format(dados.valTabela2)} />
                     <div className="flex justify-between items-center text-sm bg-green-50 p-2 rounded px-3 border border-green-100">
                       <span className="text-green-800 font-semibold">Inícios Completos (Bônus)</span>
                       <span className="font-bold text-green-800">{currencyFormatter.format(metricas.iniCompVal)}</span>
                     </div>
-                    <GainRow label="Bônus Target Ativos" val={currencyFormatter.format(dados.valTarget)} />
-                    <GainRow label="Bônus Target Estrela" val={currencyFormatter.format(dados.valEstrela)} />
+                    <GainRow label="Bônus Target Ativas" val={currencyFormatter.format(dados.valTarget)} />
+                    <GainRow label="Bônus Saldo Estrela" val={currencyFormatter.format(dados.valEstrela)} />
                   </div>
 
-                  <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 rounded-xl p-4 border border-slate-100">
-                    <h4 className="text-[10px] font-bold text-slate-400 mb-4 uppercase tracking-widest">Gráfico de Ganhos</h4>
-                    <div className="w-full h-[220px]">
+                  {/* BLOCO DO GRÁFICO - pdf-no-break reforçado para manter título e gráfico juntos */}
+                  <div className="pdf-no-break flex-1 flex flex-col items-center justify-center bg-slate-50 rounded-xl p-4 border border-slate-100 min-h-[250px]">
+                    <h4 className="text-[10px] font-bold text-slate-400 mb-4 uppercase tracking-widest text-center">Gráfico de Ganhos</h4>
+                    <div className="w-full h-full">
                       <Doughnut data={chartData} options={chartOptions} />
                     </div>
                     <div className="mt-4 w-full">
@@ -314,22 +337,23 @@ const ExtratoPerformance = () => {
                   </div>
                 </div>
 
-                <div className="gold-gradient p-6 rounded-xl shadow-lg text-white flex flex-col md:flex-row justify-between items-center">
+                {/* Valor Total */}
+                <div className="pdf-no-break gold-gradient p-6 rounded-xl shadow-lg text-white flex flex-col md:flex-row justify-between items-center">
                   <div className="flex items-center mb-2 md:mb-0">
                     <span className="text-3xl mr-3 drop-shadow-md">💎</span>
                     <div>
                       <p className="text-amber-100 text-sm font-semibold uppercase tracking-wider">Valor Total a Receber</p>
-                      <p className="text-xs text-amber-100 opacity-80">Cálculo estimado de performance</p>
+                      <p className="text-xs text-amber-100 opacity-80">Ganhos Calculados com base no PDL e Atingimento de bônus extras</p>
                     </div>
                   </div>
                   <div className="text-4xl font-extrabold drop-shadow-lg">{currencyFormatter.format(metricas.total)}</div>
                 </div>
 
-                {/* --- SEÇÃO DE TABELAS INTEGRADAS (SUBSTITUINDO O PLACEHOLDER) --- */}
+                {/* Seção de Tabelas */}
                 <div className="pt-8 border-t border-slate-100">
                   <h3 className="font-bold text-slate-700 text-xs uppercase mb-4 tracking-widest flex items-center">
                     <span className="bg-slate-800 text-white p-1 rounded mr-2 text-[8px]">REF</span> 
-                    Tabelas de Apoio Técnico
+                    Tabelas PDL
                   </h3>
                   <div className="space-y-6">
                     <Tabela1 />
